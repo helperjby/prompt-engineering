@@ -1,18 +1,11 @@
 # [Brex's](https://brex.com) Prompt Engineering Guide
 
-This guide was created by Brex for internal purposes. It's based on
-lessons learned from researching and creating Large Language Model (LLM)
-prompts for production use cases. It covers the history around LLMs as well as
-strategies, guidelines, and safety recommendations for working with and
-building programmatic systems on top of large language models, like [OpenAI's
-GPT-4](https://openai.com/research/gpt-4).
+한글번역
+이 가이드는 Brex에서 내부용으로 만들었습니다. 이 가이드는 프로덕션 사용 사례를 위한 대규모 언어 모델(LLM) 프롬프트를 연구하고 만들면서 얻은 교훈을 기반으로 합니다. 이 문서에서는 LLM에 대한 역사뿐만 아니라 [OpenAI's GPT-4](https://openai.com/research/gpt-4) 같은 대규모 언어 모델을 기반으로 프로그래밍 시스템을 구축하고 작업하기 위한 전략, 지침 및 안전 권장 사항을 다룹니다.
 
-The examples in this document were generated with a non-deterministic language
-model and the same examples may give you different results.
+이 문서의 예제는 non-deterministic language model로 생성되었으며 동일한 예제라도 다른 결과가 나올 수 있습니다.
 
-This is a living document. The state-of-the-art best practices and strategies
-around LLMs are evolving rapidly every day. Discussion and suggestions for
-improvements are encouraged.
+이 문서는 살아있는 문서입니다. LLM과 관련된 최신 모범 사례와 전략은 매일 빠르게 진화하고 있습니다. 개선을 위한 토론과 제안을 환영합니다.
 
 ## Table of Contents
 - [What is a Large Language Model?](#what-is-a-large-language-model-llm)
@@ -55,77 +48,36 @@ improvements are encouraged.
 
 ## What is a Large Language Model (LLM)?
 
-A large language model is a prediction engine that takes a sequence of words
-and tries to predict the most likely sequence to come after that sequence[^1].
-It does this by assigning a probability to likely next sequences and then
-samples from those to choose one[^2]. The process repeats until some stopping
-criteria is met.
+large language model은 단어 시퀀스를 가져와 해당 시퀀스 다음에 올 가능성이 가장 높은 시퀀스를 예측하는 예측 엔진입니다[^1]. 다음 시퀀스에 확률을 할당하고 그 중에서 샘플을 추출하여 하나를 선택하는 방식으로 이 작업을 수행합니다[^2]. 이 과정은 일부 중지 기준이 충족될 때까지 반복됩니다.
 
-Large language models learn these probabilities by training on large corpuses
-of text. A consequence of this is that the models will cater to some use cases
-better than others (e.g. if it’s trained on GitHub data, it’ll understand the
-probabilities of sequences in source code really well). Another consequence is
-that the model may generate statements that seem plausible, but are actually
-just random without being grounded in reality.
+Large language models은 대규모 corpuses of text를 학습하여 이러한 확률을 학습합니다. 그 결과 모델이 다른 사용 사례보다 특정 사용 사례에 더 잘 맞을 수 있습니다(예: GitHub 데이터로 학습한 경우 소스 코드의 시퀀스 확률을 매우 잘 이해할 수 있음). 또 다른 결과는 모델이 그럴듯해 보이지만 실제로는 현실에 근거하지 않고 무작위적인 진술을 생성할 수 있다는 것입니다.
+
+언어 모델이 시퀀스를 예측하는 정확도가 높아짐에 따라 [많은 놀라운 능력들이 등장합니다](https://www.assemblyai.com/blog/emergent-abilities-of-large-language-models/).
 
 As language models become more accurate at predicting sequences, [many
 surprising abilities
 emerge](https://www.assemblyai.com/blog/emergent-abilities-of-large-language-models/).
 
-[^1]: Language models actually use tokens, not words. A token roughly maps to a syllable in a word, or about 4 characters.
-[^2]: There are many different pruning and sampling strategies to alter the behavior and performance of the sequences.
+[^1]: 언어 모델은 실제로 단어가 아닌 토큰을 사용합니다. 토큰은 대략 단어의 한 음절, 즉 약 4글자에 매핑됩니다.
+[^2]: 시퀀스의 동작과 성능을 변경하기 위한 다양한 가지 치기 및 샘플링 전략이 있습니다.
 
-### A Brief, Incomplete, and Somewhat Incorrect History of Language Models
+### 언어 모델의 간략하고 불완전하며 다소 부정확한 역사
 
-> :pushpin: Skip [to here](#what-is-a-prompt) if you'd like to jump past the
-> history of language models. This section is for the curious minded, though
-> may also help you understand the reasoning behind the advice that follows.
+> :pushpin: 언어 모델의 역사를 건너뛰고 싶으면 [여기로](#what-is-a-prompt)로 건너뛰세요. 이 섹션은 호기심이 많은 분들을 위한 것이지만, 다음에 나오는 조언의 근거를 이해하는 데 도움이 될 수도 있습니다.
 
 #### Pre-2000’s
 
-[Language models](https://en.wikipedia.org/wiki/Language_model#Model_types)
-have existed for decades, though traditional language models (e.g. [n-gram
-models](https://en.wikipedia.org/wiki/N-gram_language_model)) have many
-deficiencies in terms of an explosion of state space ([the curse of
-dimensionality](https://en.wikipedia.org/wiki/Curse_of_dimensionality)) and
-working with novel phrases that they’ve never seen (sparsity). Plainly, older
-language models can generate text that vaguely resembles the statistics of
-human generated text, but there is no consistency within the output – and a
-reader will quickly realize it’s all gibberish. N-gram models also don’t scale
-to large values of N, so are inherently limited.
+[언어 모델](https://en.wikipedia.org/wiki/Language_model#Model_types)은 수십 년 동안 존재해 왔지만, 기존 언어 모델(예: [n-gram 모델](https://en.wikipedia.org/wiki/N-gram_language_model)은 상태 공간의 폭발적인 증가([차원의 저주](https://en.wikipedia.org/wiki/Curse_of_dimensionality))와 한 번도 본 적 없는 새로운 구문(희소성)을 다루는 데 있어 많은 결함이 있습니다.) 분명히 오래된 언어 모델은 사람이 생성한 텍스트의 통계와 막연하게 유사한 텍스트를 생성할 수 있지만, 출력에 일관성이 없기 때문에 독자는 금방 그것이 모두 횡설수설이라는 것을 알아차릴 수 있습니다. 또한 N-gram 모델은 N의 큰 값으로 확장되지 않으므로 본질적으로 제한적입니다.
 
 #### Mid-2000’s
 
-In 2007, Geoffrey Hinton – famous for popularizing backpropagation in 1980’s –
-[published an important advancement in training neural
-networks](http://www.cs.toronto.edu/~fritz/absps/tics.pdf) that unlocked much
-deeper networks. Applying these simple deep neural networks to language
-modeling helped alleviate some of problems with language models – they
-represented nuanced arbitrary concepts in a finite space and continuous way,
-gracefully handling sequences not seen in the training corpus. These simple
-neural networks learned the probabilities of their training corpus well, but
-the output would statistically match the training data and generally not be
-coherent relative to the input sequence. 
+1980년대에 역전파를 대중화시킨 것으로 유명한 Jeffrey Hinton은 2007년에 [neural networks 훈련에 있어 중요한 발전을 이룩한 논문](http://www.cs.toronto.edu/~fritz/absps/tics.pdf)을 발표하여 훨씬 더 심층적인 네트워크를 구현할 수 있는 길을 열었습니다. 이러한 간단한 deep neural networks을 언어 모델링에 적용하면 미묘한 임의의 개념을 유한한 공간과 연속적인 방식으로 표현하여 훈련 말뭉치에서 볼 수 없는 시퀀스를 우아하게 처리하는 등 언어 모델에서 발생하는 몇 가지 문제를 완화하는 데 도움이 되었습니다. 이러한 simple neural networks은 훈련 말뭉치의 확률을 잘 학습했지만, 출력은 훈련 데이터와 통계적으로 일치하지 않고 일반적으로 입력 시퀀스와 비교하여 일관성이 없었습니다. 
 
 #### Early-2010’s
 
-Although they were first introduced in 1995, [Long Short-Term Memory (LSTM)
-Networks](https://en.wikipedia.org/wiki/Long_short-term_memory) found their
-time to shine in the 2010’s. LSTMs allowed models to process arbitrary length
-sequences and, importantly, alter their internal state dynamically as they
-processed the input to remember previous things they saw. This minor tweak led
-to remarkable improvements. In 2015, Andrej Karpathy [famously wrote about
-creating a character-level
-lstm](http://karpathy.github.io/2015/05/21/rnn-effectiveness/) that performed
-far better than it had any right to.
+1995년에 처음 소개되었지만, [Long Short-Term Memory (LSTM) 네트워크](https://en.wikipedia.org/wiki/Long_short-term_memory)는 2010년대 들어 빛을 발하기 시작했습니다. LSTM을 통해 모델은 임의의 길이의 시퀀스를 처리할 수 있었고, 중요한 것은 입력을 처리할 때 내부 상태를 동적으로 변경하여 이전에 본 것을 기억할 수 있었습니다. 이 사소한 조정은 놀라운 개선으로 이어졌습니다. 2015년, Andrej Karpathy는 [문자 수준의 lstm을 만들었는데](http://karpathy.github.io/2015/05/21/rnn-effectiveness/) 그 성능은 예상보다 훨씬 더 뛰어났습니다.
 
-LSTMs have seemingly magical abilities, but struggle with long term
-dependencies. If you asked it to complete the sentence, “In France, we
-traveled around, ate many pastries, drank lots of wine, ... lots more text ...
-, but never learned how to speak _______”, the model might struggle with
-predicting “French”. They also process input one token at a time, so are
-inherently sequential, slow to train, and the `Nth` token only knows about the
-`N - 1` tokens prior to it.
+LSTM은 겉보기에는 마법 같은 능력을 가지고 있지만 장기적인 종속성으로 인해 어려움을 겪습니다. "프랑스에서 우리는 여행을 다니며 많은 페이스트리를 먹고, 와인을 많이 마시고, ... 더 많은 텍스트를 읽었지만 ... . 하지만 ______" 라는 문장을 완성하도록 요청하면 모델은 "프랑스어"를 예측하는 데 어려움을 겪을 수 있습니다. 또한 한 번에 하나의 토큰씩 입력을 처리하므로 본질적으로 순차적이고 훈련 속도가 느리며, `N번째` 토큰은 그 이전의 `N - 1` 토큰에 대해서만 알고 있습니다.
 
 #### Late-2010’s
 
